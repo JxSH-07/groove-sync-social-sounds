@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Users, Music } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface JoinRoomDialogProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface JoinRoomDialogProps {
 const JoinRoomDialog = ({ open, onOpenChange }: JoinRoomDialogProps) => {
   const [roomCode, setRoomCode] = useState("");
   const [username, setUsername] = useState("");
+  const navigate = useNavigate();
 
   const handleJoinRoom = () => {
     if (!roomCode.trim()) {
@@ -37,10 +39,11 @@ const JoinRoomDialog = ({ open, onOpenChange }: JoinRoomDialogProps) => {
     // Simulate room joining (in real app, this would check if room exists)
     toast({
       title: "Joining room...",
-      description: `Attempting to join room ${roomCode.toUpperCase()} as ${username}.`
+      description: `Welcome to room ${roomCode.toUpperCase()}, ${username}!`
     });
 
-    // Reset form and close dialog
+    // Navigate to room and close dialog
+    navigate(`/room/${roomCode.toUpperCase()}`);
     setRoomCode("");
     setUsername("");
     onOpenChange(false);

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Music, Copy, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface CreateRoomDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ const CreateRoomDialog = ({ open, onOpenChange }: CreateRoomDialogProps) => {
   const [roomName, setRoomName] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [isCreated, setIsCreated] = useState(false);
+  const navigate = useNavigate();
 
   const generateRoomCode = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -130,7 +132,14 @@ const CreateRoomDialog = ({ open, onOpenChange }: CreateRoomDialogProps) => {
               <Button variant="outline" onClick={handleClose} className="flex-1">
                 Close
               </Button>
-              <Button variant="hero" className="flex-1">
+              <Button 
+                variant="hero" 
+                className="flex-1"
+                onClick={() => {
+                  navigate(`/room/${roomCode}`);
+                  handleClose();
+                }}
+              >
                 Enter Room
               </Button>
             </div>
