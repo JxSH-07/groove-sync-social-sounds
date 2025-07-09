@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Music, Users, MessageCircle, Gamepad2, Mic, Play, Pause, SkipForward, SkipBack, Volume2, Heart, Share2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Music, Users, MessageCircle, Gamepad2, Mic, Play, Pause, SkipForward, SkipBack, Volume2, Heart, Share2, Settings, LogOut } from "lucide-react";
 import MusicPlayer from "@/components/MusicPlayer";
 import ChatPanel from "@/components/ChatPanel";
 import ParticipantsList from "@/components/ParticipantsList";
@@ -13,7 +18,14 @@ import KaraokePanel from "@/components/KaraokePanel";
 
 const Room = () => {
   const { roomCode } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("music");
+  const [audioSettings, setAudioSettings] = useState({
+    volume: [75],
+    audioDevice: "default",
+    quality: "high"
+  });
   
   // Mock room data
   const roomData = {
@@ -33,6 +45,30 @@ const Room = () => {
     album: "Hurry Up, We're Dreaming",
     duration: "4:03",
     currentTime: "1:32"
+  };
+
+  const handleShareRoom = () => {
+    const roomLink = `${window.location.origin}/room/${roomData.code}`;
+    navigator.clipboard.writeText(roomLink).then(() => {
+      toast({
+        title: "Room link copied!",
+        description: `Share code ${roomData.code} with your friends`,
+      });
+    }).catch(() => {
+      toast({
+        title: "Copy failed",
+        description: `Room code: ${roomData.code}`,
+        variant: "destructive",
+      });
+    });
+  };
+
+  const handleLeaveRoom = () => {
+    navigate("/");
+    toast({
+      title: "Left room",
+      description: "You've successfully left the room",
+    });
   };
 
   return (
@@ -157,17 +193,91 @@ const Room = () => {
               <CardTitle className="text-sm text-foreground">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <Volume2 className="w-4 h-4" />
-                Audio Settings
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
+              {/* Audio Settings Dialog */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Volume2 className="w-4 h-4" />
+                    Audio Settings
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card/95 backdrop-blur-md border-border">
+                  <DialogHeader>
+                    <DialogTitle className="text-foreground">Audio Settings</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-6 py-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Master Volume</label>
+                      <Slider
+                        value={audioSettings.volume}
+                        onValueChange={(value) => setAudioSettings(prev => ({ ...prev, volume: value }))}
+                        max={100}
+                        step={1}
+                        className="w-full"
+                      />
+                      <span className="text-sm text-muted-foreground">{audioSettings.volume[0]}%</span>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Audio Device</label>
+                      <Select value={audioSettings.audioDevice} onValueChange={(value) => setAudioSettings(prev => ({ ...prev, audioDevice: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">Default</SelectItem>
+                          <SelectItem value="speakers">Speakers</SelectItem>
+                          <SelectItem value="headphones">Headphones</SelectItem>
+                          <SelectItem value="bluetooth">Bluetooth</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Audio Quality</label>
+                      <Select value={audioSettings.quality} onValueChange={(value) => setAudioSettings(prev => ({ ...prev, quality: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low (128 kbps)</SelectItem>
+                          <SelectItem value="medium">Medium (256 kbps)</SelectItem>
+                          <SelectItem value="high">High (320 kbps)</SelectItem>
+                          <SelectItem value="lossless">Lossless</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Share Room Button */}
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleShareRoom}>
                 <Share2 className="w-4 h-4" />
                 Share Room
               </Button>
-              <Button variant="destructive" size="sm" className="w-full justify-start">
-                Leave Room
-              </Button>
+
+              {/* Leave Room Alert Dialog */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="w-full justify-start">
+                    <LogOut className="w-4 h-4" />
+                    Leave Room
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-card/95 backdrop-blur-md border-border">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-foreground">Leave Room?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-muted-foreground">
+                      Are you sure you want to leave this room? You'll need the room code to rejoin.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLeaveRoom} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Leave Room
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>
